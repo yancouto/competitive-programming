@@ -1,0 +1,27 @@
+# Stuff
+**/*~
+**/.nfs*
+*.swp
+
+# I/O
+*.in
+*.out
+*.err
+**/in*
+!**/in*.*
+**/*.in
+**/out*
+!**/out*.*
+**/*.out
+**/err*
+!**/err*.*
+**/test*
+!**/test*.*
+**/sol*
+!**/sol*.*
+**/*.sol
+
+# Executables
+*.exe
+*.out
+*.class
