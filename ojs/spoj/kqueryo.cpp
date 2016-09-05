@@ -46,7 +46,13 @@ int main() {
 	scanf("%d", &q);
 	for(i = 0; i < q; i++) {
 		scanf("%d %d %d", &a, &b, &c);
-		l = query(1, 0, n - 1, (a ^ l) - 1, (b ^ l) - 1, (c ^ l) + 1);
+		int L = (a ^ l), R = (b ^ l), K = (c ^ l);
+		//printf("Q %d %d %d (n %d)\n", L, R, K, n);
+		//assert(L >= 1 && L <= R && R <= n && K >= 1 && K <= 1000000000);
+		if(L < 1) L = 1;
+		if(R > n) R = n;
+		if(L > R) l = 0;
+		else l = query(1, 0, n - 1, L - 1, R - 1, K + 1);
 		printf("%d\n", l);
 	}
 	return 0;

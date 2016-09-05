@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
-#define x first
-#define y second
+#define fst first
+#define snd second
 typedef unsigned long long ull;
 typedef long long ll;
 typedef long double ld;
@@ -12,56 +12,50 @@ template<typename T> inline T abs(T t) { return t < 0? -t : t; }
 const ll modn = 1000000007;
 inline ll mod(ll x) { return x % modn; }
 const int N = 11234;
-ld y[N], x[N][2]; int n;
-ld sq(ld x) { return x * x; }
-
-ld dist(pii a, pii b) { return sqrtl(sq(a.x - b.x) + sq(a.y - b.y)); }
-ld cross(pii a, pii b) { return a.x * b.y - a.y * b.x; }
-
-pii operator - (pii a, pii b) { return pii(a.x - b.x, a.y - b.y); }
-
-ld myatan(ld y, ld x) {
-	ld k = atan2l(y, x);
-	assert(k >= 0);
-	return k;
-}
+inline ld sq(ld a) { return a * a; }
+ld x[N][2], y[N];
+const ld eps = 0;
 
 ld memo[N][2];
-int seen[N][2], t;
+int seen[N][2], t, n;
 ld solve(int i, int j) {
 	ld &r = memo[i][j];
 	if(seen[i][j] == t) return r;
 	seen[i][j] = t;
 	if(i == n - 1) return r = 0;
-	pii p(x[i][j], y[i]);
-	ld al = acosl(-1);
-	ld ar = 0;
 	r = 1/0.;
+	ld a = -100, b = 100;
+	bool ok = true;
 	for(int k = i + 1; k < n; k++) {
+		if(x[k][0] > x[i][j] + eps) ok = false;
+		if(x[k][1] < x[i][j] - eps) ok = false;
 		for(int g = 0; g < 2; g++) {
-			assert(y[k] > y[i]);
-			pii np(x[k][g], y[k]);
-			ld a = myatan(np.y - p.y, np.x - p.x);
-			if(a >= ar && a <= al) r = min(r, solve(k, g) + dist(p, np));
-			if(g) ar = max(ar, a);
-			else al = min(al, a);
+			ld f = atan2l(y[k] - y[i], x[k][g] - x[i][j]);
+			if(f < a - eps || f > b + eps) continue;
+			r = min(r, solve(k, g) + sqrtl(sq(y[k] - y[i]) + sq(x[k][g] - x[i][j])));
+			if(g) a = f;
+			else b = f;
 		}
 	}
-	ld a = acosl(-1) / 2.;
-	if(a >= ar && a <= al && p.x >= x[n-1][0] && p.x <= x[n-1][1]) r = min(r, y[n - 1] - y[i]);
+	if(ok) r = y[n - 1] - y[i];
 	return r;
 }
 
+ld read() {
+	double d;
+	scanf("%lf", &d);
+	return d;
+}
+
 int main() {
-	ios::sync_with_stdio(false); cin.tie(0);
 	int i;
-	while((cin >> n) && n) {
-		cin >> x[0][0] >> y[0];
-		x[0][1] = x[0][0]; n++;
-		for(i = 1; i < n; i++)
-			cin >> y[i] >> x[i][0] >> x[i][1];
-		for(i = 0; i < n; i++) y[i] = -y[i];
+	while(scanf("%d", &n) != EOF && n) {
+		x[0][0] = read(); y[0] = -read(); n++;
+		for(i = 1; i < n; i++) {
+			y[i] = -read(); x[i][0] = read(); x[i][1] = read();
+			assert(x[i][0] <= x[i][1] && y[i] > y[i-1]);
+		}
 		t++;
-		cout << setprecision(25) << solve(0, 0) << '\n';
+		printf("%.25f\n", (double)solve(0, 0));
 	}
 }
