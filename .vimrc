@@ -1,11 +1,9 @@
 set ai si noet ts=4 sw=4 sta sm nu rnu
-inoremap {<CR> {<CR>}<Esc>O
-inoremap <C-up> <C-o>:m-2<CR>
-inoremap <C-down> <C-o>:m+1<CR>
-nnoremap <C-up> :m-2<CR>
-nnoremap <C-down> :m+1<CR>
-vnoremap <C-up> :m-2<CR>gv
-vnoremap <C-down> :m'>+1<CR>gv
+imap {<CR> {<CR>}<Esc>O
+imap <C-up> <C-o>:m-2<CR>
+imap <C-down> <C-o>:m+1<CR>
+nmap <C-up> :m-2<CR>
+nmap <C-down> :m+1<CR>
 colors evening
 " Non-essential
 syntax on
