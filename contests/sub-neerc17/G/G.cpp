@@ -1,4 +1,3 @@
-
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
@@ -25,9 +24,45 @@ template<class num> inline void read(num &x) {
 	if(neg) x = -x;
 }
 
+
+const int N = 2e2+7;
 int n;
+
+int s;
+int d;
+set<pii> mp;
+set<pii>::iterator it;
 
 int main() {
 	int i, j;
-	read(n);
+	scanf("%d", &n);
+
+	for (i = 0; i < n; i++) {
+		scanf("%d %d", &s, &d);
+
+		it = mp.lower_bound(pii(s, 0));
+		pii res = pii(0, 0);
+		if (it == mp.end() || s + d <= it->first) {
+			bool ok = 1;
+			if (it != mp.begin()) {
+				--it;
+				if (it->second > s)
+					ok = 0;
+			}
+			if (ok)
+				res = pii(s, s+d);
+		}
+		
+		if (res.first == 0) {
+			int ls = 1;
+			for (pii x : mp) {
+				if (x.first - ls >= d)
+					break;
+				ls = x.second;
+			}
+			res = pii(ls, ls+d);
+		}
+		mp.insert(res);
+		printf("%d %d\n", res.first, res.second-1);
+	}
 }

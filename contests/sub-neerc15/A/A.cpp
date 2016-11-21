@@ -1,4 +1,3 @@
-
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
@@ -25,9 +24,44 @@ template<class num> inline void read(num &x) {
 	if(neg) x = -x;
 }
 
+int get (int i) {
+	if (i == 0)
+		return 6;
+	if (i == 1)
+		return 2;
+	if (i == 2)
+		return 5;
+	if (i == 3)
+		return 5;
+	if (i == 4)
+		return 4;
+	if (i == 5)
+		return 5;
+	if (i == 6)
+		return 6;
+	if (i == 7)
+		return 3;
+	if (i == 8)
+		return 7;
+	if (i == 9)
+		return 6;
+	assert(false);
+}
+
 int n;
 
 int main() {
-	int i, j;
-	read(n);
+	freopen("alarm.in", "r", stdin);
+	freopen("alarm.out", "w", stdout);
+	scanf("%d", &n);
+
+	int curr = 0;
+	for (int i = 0; i < 24; i++)
+		for (int j = 0; j < 60; j++)
+			if(get(i/10) + get(i%10) + get(j/10) + get(j%10) == n) {
+				printf("%02d:%02d\n", i, j);
+				return 0;
+			}
+
+	printf("Impossible\n");
 }

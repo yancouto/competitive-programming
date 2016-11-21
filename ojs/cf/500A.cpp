@@ -1,4 +1,3 @@
-
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
@@ -26,8 +25,20 @@ template<class num> inline void read(num &x) {
 }
 
 int n;
+int a[112345];
 
 int main() {
-	int i, j;
+	int i, j, t;
 	read(n);
+	read(t); t--;
+	for(i = 0; i < n - 1; i++) read(a[i]);
+	int x = 0;
+	while(x != n - 1) {
+		x = x + a[x];
+		if(x == t) {
+			puts("YES");
+			return 0;
+		}
+	}
+	puts("NO");
 }

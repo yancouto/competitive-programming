@@ -7,12 +7,21 @@ typedef pair<int, int> pii;
 #define pb push_back
 const ll modn = 1000000007;
 inline ll mod(ll x) { return x % modn; }
+inline ll mod2(ll x) { if(x >= modn) x -= modn; return x; }
 #ifdef ONLINE_JUDGE
 #	define debug(args...) {}
 #else
 #	define debug(args...) fprintf(stderr, args)
 #endif
 #define plus asja
+
+ll fexp(ll x, ll p) {
+	ll r = 1;
+	for(; p; p >>= 1, x = mod(x * x))
+		if(p & 1)
+			r = mod(r * x);
+	return r;
+}
 
 template<class num> inline void read(num &x) {
 	char c;
@@ -50,7 +59,7 @@ void pre() {
 			adj[st[sn - 1]].pb(i + 1);
 			sn--;
 		}
-		hs[i] = mod(10ll * hs[i - 1] + (isdigit(s[i])? s[i] - '0' : 0));
+		hs[i] = mod(10ll * hs[i - 1] + ll(isdigit(s[i])? s[i] - '0' : 0));
 	}
 	adj[0].pb(i + 1);
 	p10[0] = 1;
@@ -59,61 +68,60 @@ void pre() {
 
 ll vval[N];
 inline ll val(int l, int r) {
+	assert(l <= r);
 	if(s[l] == '(') assert(mt[l] == r);
 	if(s[l] == '(') return vval[l];
 	return mod(hs[r] - mod(hs[l - 1] * p10[r - l + 1]) + modn);
 }
 
 typedef function<ll (ll, ll)> op;
-ll sum(ll a, ll b) { return mod(a + b); }
+ll sum(ll a, ll b) { return mod2(a + b); }
 ll mul(ll a, ll b) { return mod(a * b); }
 
 const int M = 10 * N;
 int L[M], R[M];
 ll tr[M];
-int build(vector<ll> &v, op o, int l, int r) {
-	int i = en++;
-	//printf("bu %d(%d, %d)\n", i, l, r);
-	if(l == r) { tr[i] = v[l]; return i; }
-	int m = (l + r) / 2;
-	L[i] = build(v, o, l, m);
-	R[i] = build(v, o, m + 1, r);
-	tr[i] = o(tr[L[i]], tr[R[i]]);
-	return i;
-}
 
-ll query(ll e, op o, int i, int l, int r, int ql, int qr) {
-	if(qr < ql) return e;
-	//printf("qu %d(%d, %d)\n", i, l, r);
-	if(l > qr || r < ql) return e;
-	//if(l >= ql && r <= qr) printf("ret %d[%d,%d] = %lld\n", i, l, r, tr[i]);
-	if(l >= ql && r <= qr) return tr[i];
-	int m = (l + r) / 2;
-	return o(query(e, o, L[i], l, m, ql, qr), query(e, o, R[i], m + 1, r, ql, qr));
-}
-
-int sr[N], mr[N];
-vector<int> cmul[N];
+vector<int> cmul[N], zeros[N], invm[N];
 ll go(int u) {
 	ll cur = 1, val = 0;
 	for(int i = 0; i < adj[u].size() - 1; i++) {
-		if(i && s[ops[u][i-1]] == '+') sums[u].pb(cur), val += cur, cur = 1;
+		if(i && s[ops[u][i-1]] == '+') sums[u].pb(cur), val = mod2(val + cur), cur = 1;
 		ll v;
 		if(s[adj[u][i]] == '(') v = go(adj[u][i]);
 		else v = ::val(adj[u][i], adj[u][i + 1] - 2);
 		cur = mod(cur * v);
-		mults[u].pb(v);
-		//printf("mults[%d]->%lld\n", u, v);
+		mults[u].pb(v? v : 1ll);
+		zeros[u].pb(v == 0);
 	}
-	for(int i = 0; i < mult[u].size(); i++) cmul[u].pb((lower_bound(ops[u].begin(), ops[u].end(), mult[u][i]) - ops[u].begin()) + 1);
-	sums[u].pb(cur); val += cur;
-	mr[u] = build(mults[u], mul, 0, mults[u].size() - 1);
-	sr[u] = build(sums[u], sum, 0, sums[u].size() - 1);
+	ll all = 1;
+	for(ll x : mults[u]) all = mod(all * x);
+	invm[u].resize(mults[u].size());
+	invm[u][mults[u].size() - 1] = fexp(all, modn - 2);
+	for(int i = mults[u].size() - 2; i >= 0; i--) invm[u][i] = mod(invm[u][i + 1] * mults[u][i + 1]);
+	for(int i = 1; i < mults[u].size(); i++) mults[u][i] = mod(mults[u][i - 1] * mults[u][i]), zeros[u][i] += zeros[u][i - 1];
+	int j = 0;
+	for(int i = 0; i < mult[u].size(); i++) {
+		while(ops[u][j] < mult[u][i]) j++;
+		cmul[u].pb(j + 1);
+	}
+	sums[u].pb(cur); val = mod2(val + cur);
+	for(int i = 1; i < sums[u].size(); i++) sums[u][i] = mod2(sums[u][i - 1] + sums[u][i]);
 	vval[u] = val;
 	return val;
 }
 
-int solve(int l, int r) {
+inline ll querys(int u, int l, int r) {
+	return mod(sums[u][r] - (l? sums[u][l - 1] : 0ll) + modn);
+}
+
+inline ll querym(int u, int l, int r) {
+	int nz = zeros[u][r] - (l? zeros[u][l - 1] : 0);
+	if(nz) return 0;
+	return mod(mults[u][r] * (l? invm[u][l - 1] : 1ll));
+}
+
+inline int solve(int l, int r) {
 	if(no[l] != no[r]) return -1;
 	if(s[l] == '+' || s[l] == '*' || s[l] == ')' || s[r] == '+' || s[r] == '*' || s[r] == '(') return -1;
 	if(s[l] == '(' && mt[l] > r) return -1;
@@ -126,21 +134,21 @@ int solve(int l, int r) {
 		auto ml = lower_bound(mult[u].begin(), mult[u].end(), l);
 		auto mr = upper_bound(mult[u].begin(), mult[u].end(), r);
 		if(ml == mr) return val(l, r);
-		else return mod(mod(val(l, (*ml) - 1) * query(1, mul, ::mr[u], 0, mults[u].size() - 1, cmul[u][ml - mult[u].begin()], cmul[u][(mr - mult[u].begin()) - 1] - 1)) * val((*prev(mr)) + 1, r));
+		else return mod(mod(val(l, (*ml) - 1) * querym(u, cmul[u][ml - mult[u].begin()], cmul[u][(mr - mult[u].begin()) - 1] - 1)) * val((*prev(mr)) + 1, r));
 	} else {
-		ll res = query(0, sum, ::sr[u], 0, sums[u].size() - 1, (sl - plus[u].begin()) + 1, (sr - plus[u].begin()) - 1);
+		ll res = querys(u, (sl - plus[u].begin()) + 1, (sr - plus[u].begin()) - 1);
 		ll left, right;
 		auto ml = lower_bound(mult[u].begin(), mult[u].end(), l);
 		auto mr = upper_bound(mult[u].begin(), mult[u].end(), *sl);
 		if(ml == mr) left = val(l, (*sl) - 1);
-		else left = mod(val(l, (*ml) - 1) * query(1, mul, ::mr[u], 0, mults[u].size() - 1, cmul[u][ml - mult[u].begin()], cmul[u][(mr - mult[u].begin()) - 1]));
+		else left = mod(val(l, (*ml) - 1) * querym(u, cmul[u][ml - mult[u].begin()], cmul[u][(mr - mult[u].begin()) - 1]));
 		ml = lower_bound(mult[u].begin(), mult[u].end(), *prev(sr));
 		mr = upper_bound(mult[u].begin(), mult[u].end(), r);
 		if(ml == mr) right = val((*prev(sr)) + 1, r);
 		else {
-			right = mod(val((*prev(mr)) + 1, r) * query(1, mul, ::mr[u], 0, mults[u].size() - 1, cmul[u][ml - mult[u].begin()] - 1, cmul[u][(mr - mult[u].begin()) - 1] - 1));
+			right = mod(val((*prev(mr)) + 1, r) * querym(u, cmul[u][ml - mult[u].begin()] - 1, cmul[u][(mr - mult[u].begin()) - 1] - 1));
 		}
-		return mod(res + left + right);
+		return mod2(res + mod2(left + right));
 	}
 }
 

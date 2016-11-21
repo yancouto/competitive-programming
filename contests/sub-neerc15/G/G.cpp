@@ -1,4 +1,3 @@
-
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
@@ -26,8 +25,34 @@ template<class num> inline void read(num &x) {
 }
 
 int n;
+ll p[2][2][2];
+ll s[2];
+
+void yep () {
+	printf("Yes\n");
+	exit(0);
+}
 
 int main() {
-	int i, j;
-	read(n);
+	 #ifdef ONLINE_JUDGE
+		freopen("grave.in", "r", stdin);
+		freopen("grave.out", "w", stdout);
+	#endif
+
+	for (int k = 0; k < 2; k++)
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++)
+				scanf("%lld", &p[k][i][j]);
+
+	for (int i = 0; i < 2; i++) {
+		scanf("%lld", &s[i]);
+	}
+	
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++)
+			if (abs(p[0][i][j] - p[1][i][j]) >= s[j] 
+			&&  abs(p[0][0][!j] - p[0][1][!j]) >= s[!j]) {
+				yep();
+			}
+	printf("No\n");
 }
