@@ -1,4 +1,3 @@
-
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
@@ -14,7 +13,7 @@ inline ll mod(ll x) { return x % modn; }
 #	define debug(args...) fprintf(stderr, args)
 #endif
 
-template<class num> inline void rd(num &x) {
+template<class num> inline void read(num &x) {
 	char c;
 	while(isspace(c = getchar()));
 	bool neg = false;
@@ -28,6 +27,13 @@ template<class num> inline void rd(num &x) {
 int n;
 
 int main() {
-	int i, j;
-	rd(n);
+	int i, j, l, r, m, k = INT_MAX;
+	read(n); read(m);
+	for(i = 0; i < m; i++) {
+		read(l); read(r);
+		k = min(k, r - l + 1);
+	}
+	printf("%d\n", k);
+	for(i = 0; i < n; i++) printf("%d ", i % k);
+	putchar('\n');
 }
