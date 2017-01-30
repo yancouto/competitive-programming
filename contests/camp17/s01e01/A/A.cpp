@@ -26,9 +26,10 @@ template<class num> inline void read(num &x) {
 
 int n;
 
-const int N = 3123;
-ll c[3009][3009];
-ll x[N], y[N], yt[N];
+const int N = 3009;
+ll c[N][N];
+ll x[N], y[N];
+double ct[N][N], add[N], add2[N], yt[N];
 
 int main() {
 	int i, j;
@@ -42,8 +43,18 @@ int main() {
 		for(j = 0; j < n; j++)
 			x[i] += c[i][j];
 	for(i = 0; i < n; i++)
-		read(yt[i]);
+		for(j = 0; j < n; j++)
+			ct[i][j] = double(c[i][j]) / x[j];
 	for(i = 0; i < n; i++)
-		printf("%.20f\n", (double(x[i]) / y[i]) * double(yt[i]));
-	
+		scanf("%lf", &yt[i]);
+	while(clock() < 1.8 * CLOCKS_PER_SEC) {
+		memset(add2, 0, sizeof add2);
+		for(i = 0; i < n; i++)
+			for(j = 0; j < n; j++)
+				add2[i] += ct[i][j] * (yt[j] + add[j]);
+		for(i = 0; i < n; i++)
+			add[i] = add2[i];
+	}
+	for(i = 0; i < n; i++)
+		printf("%.20f\n", yt[i] + add[i]);
 }

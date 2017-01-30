@@ -2,7 +2,7 @@
 #include <ext/pb_ds/tree_policy.hpp>
 using namespace __gnu_pbds;
 typedef int tA;
-typedef int tB;
+typedef int tB; // or null_type if you want a set
 typedef tree<tA, tB, less<tA>, rb_tree_tag, tree_order_statistics_node_update> ord_set;
 // map: tA -> tB com comparador less<tA>
 // pode usar como um map normalmente
