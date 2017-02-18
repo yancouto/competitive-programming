@@ -13,144 +13,97 @@ inline ll mod(ll x) { return x % modn; }
 #	define debug(args...) fprintf(stderr, args)
 #endif
 
-#include <bits/stdc++.h>
-using namespace std;
+typedef complex<double> num;
+const double pi = acos(-1.0);
+const int N = 1100;
+int p[N];
 
-namespace sf {
-const int NS = 812;
-const int N = 812 * 812 * 2;
-
-int cn, cd, ns, en = 1, lst;
-string S[NS]; int si = -1;
-/* sufn[si][i] no do sufixo S[si][i...] */
-vector<int> sufn[N];
-
-struct node {
-	int l, r, si;
-	int p, suf;
-	map<char, int> adj;
-	node() : l(0), r(-1), suf(0), p(0) {}
-	node(int L, int R, int S, int P) : l(L), r(R), si(S), p(P) {}
-	inline int len() { return r - l + 1; }
-	inline int operator[](int i) { return S[si][l + i]; }
-	inline int& operator()(char c) { return adj[c]; }
-} t[N];
-
-inline int new_node(int L, int R, int S, int P) {
-	t[en] = node(L, R, S, P);
-	return en++;
-}
-
-void add_string(string s) {
-	s += '$';
-	S[++si] = s;
-	sufn[si].resize(s.size() + 1);
-	cn = cd = 0;
-	int i = 0; const int n = s.size();
-	for(int j = 0; j < n; j++)
-		for(; i <= j; i++) {
-			if(cd == t[cn].len() && t[cn](s[j]))
-				cn = t[cn](s[j]), cd = 0;
-			if(cd < t[cn].len() && t[cn][cd] == s[j]) {
-				cd++;
-				if(j < s.size() - 1) break;
-				else {
-					if(i) t[lst].suf = cn;
-					for(; i <= j; i++) {
-						sufn[si][i] = cn;
-						cn = t[cn].suf;
-					}
-				}
-			} else if(cd == t[cn].len()) {
-				sufn[si][i] = en;
-				if(i) t[lst].suf = en; lst = en;
-				t[cn](s[j]) = new_node(j, n - 1, si, cn);
-				cn = t[cn].suf;
-				cd = t[cn].len();
-			} else {
-				int mid = new_node(t[cn].l, t[cn].l + cd - 1, t[cn].si, t[cn].p);
-				t[t[cn].p](t[cn][0]) = mid;
-				if(ns) t[ns].suf = mid;
-				if(i) t[lst].suf = en; lst = en;
-				sufn[si][i] = en;
-				t[mid](s[j]) = new_node(j, n - 1, si, mid);
-				t[mid](t[cn][cd]) = cn;
-				t[cn].p = mid; t[cn].l += cd;
-				cn = t[mid].p;
-				int g = cn? j - cd : i + 1;
-				cn = t[cn].suf;
-				while(g < j && g + t[t[cn](S[si][g])].len() <= j)
-					cn = t[cn](S[si][g]), g += t[cn].len();
-				if(g == j)
-					ns = 0, t[mid].suf = cn, cd = t[cn].len();
-				else
-					ns = mid, cn = t[cn](S[si][g]), cd = j - g;
+// DFT se type = 1 e IDFT se i = -1
+// Se for multiplicar lembre-se de deixar cada vetor com n>=soma dos graus dos pols
+// n tem que ser potencia de 2
+void FFT(num v[], num ans[], int n, int type) {
+	assert(!(n & (n - 1)));
+	int i, sz, o;
+	p[0] = 0;
+	for(i = 1; i < n; i++) p[i] = (p[i >> 1] >> 1) | ((i & 1)? (n >> 1) : 0);
+	for(i = 0; i < n; i++) ans[i] = v[p[i]];
+	for(sz = 1; sz < n; sz <<= 1) {
+		const num wn(cos(type * pi / sz), sin(type * pi / sz));
+		for(o = 0; o < n; o += (sz << 1)) {
+			num w = 1;
+			for(i = 0; i < sz; i++) {
+				const num u = ans[o + i], t = w * ans[o + sz + i];
+				ans[o + i] = u + t;
+				ans[o + i + sz] = u - t;
+				w *= wn;
 			}
 		}
+	}
+	if(type == -1) for(i = 0; i < n; i++) ans[i] /= n;
 }
-};
 
 
 int n, m;
+char g[N][N];
+int r, c;
+char pa[N][N];
 
-char g[812][812];
-char p[412][412];
+num a[N], b[N], aux[N];
 
-bitset<412> oc[812][412];
-
-using namespace sf;
+int A[412][412][412];
+int q[N];
 
 int main() {
-	int i, j, k, r, c;
+	int i, j, k;
 	scanf("%d %d", &n, &m);
-	for(i = 0; i < n; i++)
-		for(j = 0; j < m; j++)
-			scanf(" %c", &g[i][j]);
+	for(i = 0; i < n; i++) scanf("%s", g[i]);
 	scanf("%d %d", &r, &c);
+	for(i = 0; i < r; i++) scanf("%s", pa[i]);
+
+	for(k = 0; k < 26; k++)
+		for(i = 0; i < n; i++)
+			for(j = 0; j < r; j++) {
+				for(int ii = 0; ii < m; ii++)
+					a[ii] = (g[i][ii] == ('a' + k));
+				for(int ii = m; ii < 1024; ii++) a[ii] = 0;
+				for(int jj = 0; jj < c; jj++)
+					b[jj] = (pa[j][c - 1 - jj] == ('a' + k));
+				for(int jj = c; jj < 1024; jj++) b[jj] = 0;
+				
+				//for(int ii = 0; ii < m; ii++)
+				//	printf("%d%c", int(abs(a[ii]) + .5), " \n"[ii == m - 1]);
+				//for(int ii = 0; ii < c; ii++)
+				//	printf("%d%c", int(abs(b[ii]) + .5), " \n"[ii == c - 1]);
+
+
+				FFT(a, aux, 1024, 1);
+				FFT(b, a, 1024, 1);
+				for(int ii = 0; ii < 1024; ii++)
+					a[ii] *= aux[ii];
+				FFT(a, b, 1024, -1);
+				//for(int ii = 0; ii < m + c; ii++)
+				//	printf("%d%c", int(abs(b[ii]) + .5), " \n"[ii == m + c - 1]);
+				for(int ii = c - 1; ii < c - 1 + m; ii++)
+					A[i][j][ii - (c - 1)] += int(abs(b[ii]) + .5);
+				for(int ii = 0; ii < c - 1; ii++)
+					A[i][j][(550*m - (c - 1 - ii) ) % m] += int(abs(b[ii]) + .5);
+			}
 	for(i = 0; i < r; i++)
 		for(j = 0; j < c; j++)
-			scanf(" %c", &p[i][j]);
-	for(i = 0; i < n + r - 1; i++)
-		for(j = 0; j < m + c - 1; j++)
-			g[i][j] = g[i % n][j % m];
-	int on = n, om = m;
-	n += r - 1; m += c - 1;
+			q[i] += (pa[i][j] == '?');
+	
+	//for(i = 0; i < n; i++)
+	//	for(j = 0; j < r; j++) {
+	//		printf("Row (%d) and (%d)\n", i, j);
+	//		for(k = 0; k < m; k++)
+	//			printf("%d%c", A[i][j][k], " \n"[k == m - 1]);
+	//	}
 	for(i = 0; i < n; i++)
-		add_string(g[i]);
-	map<int, vector<pii>> rev;
-	for(i = 0; i < n; i++)
-		for(j = 0; j < m; j++)
-			rev[sufn[i][j]].pb(pii(i, j));
-	for(i = 0; i < r; i++) {
-		vector<pii> ns;
-		ns.pb(pii(0, 0));
-		for(j = 0; j < c; j++) {
-			vector<pii> nx;
-			for(pii e : ns) {
-				if(e.snd == t[e.fst].len()) {
-					if(p[i][j] == '?') for(auto y : t[e.fst].adj) nx.pb(pii(y.snd, 1));
-					else if(t[e.fst].adj.count(p[i][j])) nx.pb(pii(t[e.fst].adj[p[i][j]], 1));
-				} else if(p[i][j] == '?' || p[i][j] == t[e.fst][e.snd]) nx.pb(pii(e.fst, e.snd + 1));
-			}
-			ns = nx;
-		}
-		vector<int> ls;
-		while(!ns.empty()) {
-			int v = ns.back().fst; ns.pop_back();
-			if(t[v].adj.empty()) ls.pb(v);
-			else for(auto x : t[v].adj) ns.pb(pii(x.snd, 0));
-		}
-		for(int v : ls)
-			for(pii o : rev[v]) {
-				if(o.snd >= om) continue;
-				//printf("[%d] occurs in (%d, %d)\n", i, o.fst, o.snd);
-				oc[o.fst][o.snd][i] = true;
-			}
-	}
-	for(i = 0; i < on; i++)
-		for(j = 0; j < om; j++) {
-			for(k = 0; k < r && oc[i + k][j][k]; k++);
-			putchar('0' + (k == r));
-			if(j == om - 1) putchar('\n');
+		for(j = 0; j < m; j++) {
+			for(k = 0; k < r; k++)
+				if(A[(i + k) % n][k][j] + q[k] != c)
+					break;
+			printf("%d", (k == r));
+			if(j == m - 1) putchar('\n');
 		}
 }
