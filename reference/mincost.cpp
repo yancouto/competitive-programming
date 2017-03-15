@@ -12,7 +12,7 @@ int seen[N], tempo;
 int qu[N];
 
 num tot;
-bool spfa(int s, int t) {
+val spfa(int s, int t) {
 	tempo++;
 	int a = 0, b = 0;
 	for(int i = 0; i < N; i++) d[i] = inf;
