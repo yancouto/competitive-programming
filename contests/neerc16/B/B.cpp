@@ -13,7 +13,7 @@ inline ll mod(ll x) { return x % modn; }
 #	define debug(args...) fprintf(stderr, args)
 #endif
 
-const int N = 3000009;
+const int N = 4000009;
 const int M = 500009;
 int n;
 char str[N];
@@ -67,47 +67,61 @@ void dfs(int u) {
 int tr[2*M][2], en = 1;
 int p[2*M];
 vector<int> ot[2*M];
+vector<int> q[2*M];
+int Q[M];
 int E = 0;
+int fn;
+
+void imp() {
+	puts("NO");
+	exit(0);
+}
 
 void go(const char *s, int u, int x, bool b) {
 	if(!s[0]) {
 		if(b) {
-			if(tr[u][0]) adj[x].pb(2 * n + tr[u][0]), E++;
-			if(tr[u][1]) adj[x].pb(2 * n + tr[u][1]), E++;
-			if(u) adj[x].pb(2 * n + en + p[u]), E++;
-			adj[2 * n + en + u].pb(x ^ 1), E++;
+			if(tr[u][0]) adj[x].pb(2 * n + tr[u][0]);
+			if(tr[u][1]) adj[x].pb(2 * n + tr[u][1]);
+			if(u) adj[x].pb(2 * n + en + p[u]);
+			adj[2 * n + en + u].pb(x ^ 1);
 		} else {
-			adj[2 * n + u].pb(x ^ 1), E++;
+			adj[2 * n + u].pb(x ^ 1);
+			q[u].pb(Q[x / 2]);
 		}
 		if(!b) ot[u].pb(x);
-		else {
-			for(int i = 0; i < ot[u].size(); i++)
-				for(int j = 0; j < ot[u].size(); j++)
-					if(i != j) {
-						adj[ot[u][i]].pb(ot[u][j] ^ 1), E++;
-						if(E > 51934567) {
-							puts("NO");
-							exit(0);
-						}
-					}
+		else if(q[u].size() > 1) {
+			sort(q[u].begin(), q[u].end());
+			if(q[u][0] == q[u][1] && q[u][0] == -1) imp();
+			for(int i = 0; i < int(ot[u].size()) - 2; i++)
+				if(q[u][i] == q[u][i + 1] && q[u][i] == q[u][i + 2])
+					imp();
+			for(int i = 0; i < ot[u].size(); i++) {
+				adj[fn + i].pb(ot[u][i] ^ 1);
+				if(i < int(ot[u].size()) - 1) adj[fn + i].pb(fn + i + 1);
+				adj[fn + ot[u].size() + i].pb(ot[u][i] ^ 1);
+				if(i) adj[fn + ot[u].size() + i].pb(fn + ot[u].size() + i - 1);
+			}
+			for(int i = 0; i < ot[u].size(); i++) {
+				if(i < int(ot[u].size()) - 1) adj[ot[u][i]].pb(fn + i + 1);
+				if(i) adj[ot[u][i]].pb(fn + ot[u].size() + i - 1);
+			}
+			fn += 2 * ot[u].size();
 		}
 	}
 	if(s[0] == '?' || s[0] == '0') {
 		if(!tr[u][0]) {
 			tr[u][0] = en++;
-			adj[2 * n + u].pb(2 * n + tr[u][0]), E++;
+			adj[2 * n + u].pb(2 * n + tr[u][0]);
 			p[tr[u][0]] = u;
 		}
-		if(b) adj[2 * n + en + tr[u][0]].pb(2 * n + en + u), E++;
 		go(s + 1, tr[u][0], x, b);
 	}
 	if(s[0] == '?' || s[0] == '1') {
 		if(!tr[u][1]) {
 			tr[u][1] = en++;
-			adj[2 * n + u].pb(2 * n + tr[u][1]), E++;
+			adj[2 * n + u].pb(2 * n + tr[u][1]);
 			p[tr[u][1]] = u;
 		}
-		if(b) adj[2 * n + en + tr[u][1]].pb(2 * n + en + u), E++;
 		go(s + 1, tr[u][1], x + (s[0] == '?'), b);
 	}
 }
@@ -123,11 +137,14 @@ int main() {
 	scanf("%d", &n);
 	for(i = 0; i < n; i++) {
 		scanf("%s", str);
-		go(str, 0, 2 * i, false);
 		if(!strchr(str, '?'))
-			adj[2 * i + 1].pb(2 * i);
+			adj[2 * i + 1].pb(2 * i), Q[i] = -1;
+		else Q[i] = strchr(str, '?') - str;
+		go(str, 0, 2 * i, false);
 		s[i] = str;
 	}
+	for(i = 1; i < en; i++) adj[2 * n + i + en].pb(2 * n + p[i] + en);
+	fn = 2 * n + 2 * en;
 	for(i = 0; i < n; i++)
 		go(s[i].c_str(), 0, 2 * i, true);
 	for(i = 0; i < 2 * n + 2 * en; i++)
