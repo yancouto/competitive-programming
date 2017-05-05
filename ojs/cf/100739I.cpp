@@ -28,7 +28,6 @@ int main() {
 		else l = m + 1;
 	}
 	ll A = l;
-	//if(R > (b + R) * real(sin<ld>(pi / A)) + eps) { puts("0"); return 0; }
 	l = 3; r = 1e18;
 	while(l < r) {
 		ll m = (l + r + 1) / 2;
