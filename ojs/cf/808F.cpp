@@ -13,61 +13,63 @@ inline ll mod(ll x) { return x % modn; }
 #	define debug(args...) fprintf(stderr, args)
 #endif
 namespace f {
+	const int maxv = 312;
+	const int maxe = 112345 * 2;
+	typedef int num;
+	num inf = INT_MAX;
+	int n = maxv;
 
-const int N = 1212, M = 41234 * 2;
-typedef int val;
-typedef int num;
-int es[N], to[M], nx[M], en, pai[N];
-val fl[M], cp[M];
-num cs[M], d[N];
-const num inf = 1e8, eps = 0;
-const val infv = INT_MAX;
-int seen[N], tempo;
-int qu[N];
+	int to[maxe], en, nx[maxe], es[maxe], lv[maxv], qu[maxv], cr[maxv];
+	num cp[maxe], fl[maxe];
 
-num tot;
-val spfa(int s, int t) {
-	tempo++;
-	int a = 0, b = 0;
-	for(int i = 0; i < N; i++) d[i] = inf;
-	d[s] = 0;
-	qu[b++] = s;
-	seen[s] = tempo;
-	while(a != b) {
-		int u = qu[a++]; if(a == N) a = 0;
-		seen[u] = 0;
-		for(int e = es[u]; e != -1; e = nx[e])
-			if(cp[e] - fl[e] > val(0) && d[u] + cs[e] < d[to[e]] - eps) {
-				d[to[e]] = d[u] + cs[e]; pai[to[e]] = e ^ 1;
-				if(seen[to[e]] < tempo) { seen[to[e]] = tempo; qu[b++] = to[e]; if(b == N) b = 0; }
+
+	bool bfs(int s, int t) {
+		memset(lv, -1, sizeof(int) * n);
+		lv[s] = 0;
+		int a = 0, b = 0;
+		qu[b++] = s; cr[s] = es[s];
+		while(a < b) {
+			for(int i = es[qu[a]]; i != -1; i = nx[i]) {
+				if(cp[i] > fl[i] && lv[to[i]] == -1) {
+					lv[to[i]] = lv[qu[a]] + 1;
+					qu[b++] = to[i];
+					cr[to[i]] = es[to[i]];
+					if(to[i] == t) return true;
+				}
 			}
+			a++;
+		}
+		return false;
 	}
-	if(d[t] == inf) return false;
-	val mx = infv;
-	for(int u = t; u != s; u = to[pai[u]])
-		mx = min(mx, cp[pai[u] ^ 1] - fl[pai[u] ^ 1]);
-	tot += d[t] * val(mx);
-	for(int u = t; u != s; u = to[pai[u]])
-		fl[pai[u]] -= mx, fl[pai[u] ^ 1] += mx;
-	return mx;
-}
 
-void init(int n) {
-	en = 0;
-	memset(es, -1, sizeof(int) * n);
-}
+	num dfs(int u, int t, num mx) {
+		if(u == t) return mx;
+		for(int &i = cr[u]; i != -1; i = nx[i])
+			if(cp[i] > fl[i] && lv[to[i]] == lv[u] + 1)
+				if(num a = dfs(to[i], t, min(mx, cp[i] - fl[i]))) {
+					fl[i] += a;
+					fl[i ^ 1] -= a;
+					return a;
+				}
+		return 0;
+	}
 
-val flow;
-num mncost(int s, int t) {
-	tot = 0; flow = 0;
-	while(val a = spfa(s, t)) flow += a;
-	return tot;
-}
 
-void add_edge(int u, int v, val c, num s) {
-	fl[en] = 0; cp[en] = c; to[en] = v; nx[en] = es[u]; cs[en] =  s; es[u] = en++;
-	fl[en] = 0; cp[en] = 0; to[en] = u; nx[en] = es[v]; cs[en] = -s; es[v] = en++;
-}
+	num max_flow(int s, int t) {
+		num fl = 0, a;
+		while(bfs(s, t))
+			while(a = dfs(s, t, inf))
+				fl += a;
+		return fl;
+	}
+
+	void reset_all(int n2=maxv) { n = n2; en = 0; memset(es, -1, sizeof(int) * n); }
+	void reset_flow() { memset(fl, 0, sizeof(num) * en); }
+
+	void add_edge(int a, int b, num c, num rc=0) {
+		fl[en] = 0; to[en] = b; cp[en] = c;  nx[en] = es[a]; es[a] = en++;
+		fl[en] = 0; to[en] = a; cp[en] = rc; nx[en] = es[b]; es[b] = en++;
+	}
 }
 
 int n, k;
@@ -90,27 +92,26 @@ bool ok(int L) {
 	sort(c1.begin(), c1.end(), [](card a, card b) { return a.p > b.p; });
 	while(c1.size() > 1) c1.pop_back();
 	for(card cc : c1) cs.pb(cc);
-	f::init(cs.size() + 2);
+	f::reset_all(cs.size() + 2);
 	ll all = 0;
 	for(i = 0; i < cs.size(); i++) {
 		all += cs[i].p;
 		if(cs[i].c & 1) {
-			f::add_edge(i, cs.size() + 1, 1, 0);
+			f::add_edge(i, cs.size() + 1, cs[i].p);
 			continue;
 		}
-		f::add_edge(cs.size(), i, 1, 0);
+		f::add_edge(cs.size(), i, cs[i].p);
 		for(j = 0; j < cs.size(); j++) {
 			if(!(cs[j].c & 1) || comp[cs[i].c + cs[j].c]) continue;
 			debug("%d, %d : %d + %d = %d\n", i, j, cs[i].c, cs[j].c, comp[cs[i].c + cs[j].c]);
-			f::add_edge(i, j, 1, min(cs[i].p, cs[j].p));
+			f::add_edge(i, j, f::inf);
 		}
 	}
-	int power = all - f::mncost(cs.size(), cs.size() + 1);
-	debug("L %d -- (%d, %d)\n", L, f::flow, power);
+	int power = all - f::max_flow(cs.size(), cs.size() + 1);
+	debug("L %d -- (%d - %d)\n", L, all, all - power);
 	return power >= k;
 }
 
-// CHANGE TO MAXFLOW --- EXACTLY LIKE UNWEIGHTED VERTEX COVER
 int main() {
 	int i, j;
 	for(i = 2; i < M; i++)
