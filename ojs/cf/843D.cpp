@@ -56,10 +56,12 @@ int main() {
 	priority_queue<pii> pq;
 	pq.push(pii(0, 1));
 	for(i = 1; i <= n; i++) d[i] = LLONG_MAX, seen[i] = INT_MAX;
+	vector<deque<int>> all;
 	while(!pq.empty()) {
 		pii x = pq.top(); pq.pop();
 		if(d[x.snd] != LLONG_MAX) continue;
 		d[x.snd] = -x.fst;
+		add(all, x.snd);
 		for(int e : adj[x.snd])
 			pq.push(pii(x.fst - c[e], b[e]));
 	}
@@ -71,6 +73,14 @@ int main() {
 		} else {
 			for(int e : rm[q])
 				c[e]--;
+			vector<deque<int>> all2;
+			for(deque<int> &dq : all) {
+				while(!dq.empty()) {
+					int x = dq.front(); dq.pop_front();
+					if(seen[x] == q) continue;
+					for(int e : adj[x])
+				}
+			}
 			queue<int> qq;
 			qq.push(1); seen[1] = q;
 			while(!qq.empty()) {
