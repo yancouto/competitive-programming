@@ -53,6 +53,8 @@ int main() {
 			else
 				dy.pb(d);
 		}
+		sort(dx.begin(), dx.end());
+		sort(dy.begin(), dy.end());
 		for(int g = 0; g < dx.size(); g++) {
 			dnc d = dx[g];
 			int v = dx.size() - g;
@@ -65,7 +67,7 @@ int main() {
 			if(h > v) h = v;
 			if(v > h + 1) v = h + 1;
 			if(v == h + 1) {
-				ex[d.i] = dx[v - 1].p;
+				ex[d.i] = dx[g + v - 1].p;
 				ey[d.i] = H;
 			} else {
 				assert(v == h);
@@ -86,7 +88,7 @@ int main() {
 			if(h > v + 1) h = v + 1;
 			if(h == v + 1) {
 				ex[d.i] = W;
-				ey[d.i] = dy[h - 1].p;
+				ey[d.i] = dy[g + h - 1].p;
 			} else {
 				assert(v == h);
 				ex[d.i] = dx[v - 1].p;

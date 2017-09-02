@@ -44,7 +44,8 @@ int main() {
 	//}
 	ll k;
 	rd(k);
-	int ct = 0;
+	putchar('a');
+	int ct = 1;
 	while(k > 0) {
 		for(i = 1; i * (i - 1) / 2 <= k; i++);
 		i--;
