@@ -1,4 +1,3 @@
-
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
@@ -27,7 +26,34 @@ template<class num> inline void rd(num &x) {
 
 int n;
 
+ll a[1123][12];
+
 int main() {
-	int i, j;
+	int i, j, k, g;
 	rd(n);
+	if(n > 40) {
+		printf("0\n");
+		return 0;
+	}
+	for(i = 0; i < n; i++)
+		for(j = 0; j < 5; j++)
+			rd(a[i][j]);
+	vector<int> good;
+	for(i = 0; i < n; i++) {
+		bool bad = false;
+		for(j = 0; j < n; j++)
+			if(j != i)
+				for(k = 0; k < n; k++) {
+					if(k == i || k == j) continue;
+					ll tot = 0;
+					for(g = 0; g < 5; g++)
+						tot += (a[j][g] - a[i][g]) * (a[k][g] - a[i][g]);
+					if(tot > 0) bad = true;
+				}
+		if(!bad) good.pb(i);
+	}
+	printf("%d\n", int(good.size()));
+	if(good.empty()) return 0;
+	for(int x : good) printf("%d ", x + 1);
+	putchar('\n');
 }
