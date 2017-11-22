@@ -10,87 +10,95 @@ const ll modn = 1000000007;
 inline ll mod(ll x) { return x % modn; }
 
 const int N = 112345;
-
-set<int> seen2;
-deque<int> tmp;
-map<int, int> co, cp;
-set<int> seen;
-map<int, vector<pii>> adj;
-int is_bip[N];
+int seen[N];
+int c[2 * N], cn;
 int bad; ll badval;
-bool any;
+int bip[N], co[N], cp[N];
+vector<pii> adj[N];
 
-bool bip(int cn, int h, int u, int p, ll acc, int c) {
-	if(seen.count(u)) {
-		if(co[u] == c) return true;
-		is_bip[cn] = false;
-		if(any) return false;
-		tmp.pb(u);
-		any = true;
-		while(tmp.front() != u)
-			tmp.pop_front();
-		//for(int x : tmp) printf("%d ", x); putchar('\n');
+int st[N], sn;
+void dfs(int cn, int u, int c) {
+	if(seen[u]) {
+		if(c == co[u]) return;
+		if(!bip[cn]) return;
+		bip[cn] = 0;
+		int i;
+		st[sn++] = u;
+		for(i = 0; st[i] != u; i++);
 		ll tot = 0;
-		for(int i = 0; i < int(tmp.size()) - 1; i++)
-			for(pii e : adj[tmp[i]])
-				if(e.fst == tmp[i + 1]) {
-					tot += (i & 1)? -e.snd : e.snd;
+		ll cur = 1;
+		for(; i < sn - 1; i++)
+			for(pii e : adj[st[i]])
+				if(e.fst == st[i + 1]) {
+					tot += e.snd * cur;
+					cur = -cur;
 					break;
 				}
 		bad = u;
 		assert(!(tot % 2));
 		badval = tot / 2;
-		return false;
+		return;
 	}
-	seen.insert(u);
 	cp[u] = cn;
-	tmp.pb(u);
+	st[sn++] = u;
+	seen[u] = 1;
 	co[u] = c;
 	for(pii e : adj[u])
-		bip(cn, h + 1, e.fst, u, acc + e.snd * c, -c);
-	if(!any) tmp.pop_back();
+		dfs(cn, e.fst, !c);
+	sn--;
 }
 
-map<int, ll> val;
+ll val[N];
 void go(int u, ll v) {
-	seen2.insert(u);
+	//printf("go(%d, %lld)\n", c[u], v);
+	if(seen[u] == 2) return assert(v == val[u]);
 	val[u] = v;
-	for(pii e : adj[u])
-		if(!seen2.count(e.fst))
-			go(e.fst, e.snd - v);
+	seen[u] = 2;
+	for(pii e : adj[u]) {
+		//printf("%d->%d (%lld)\n", c[u], c[e.fst], e.snd);
+		go(e.fst, e.snd - v);
+	}
 }
 
+int a[N], b[N], w[N];
 int main() {
-	int i, m, q, a, b, w;
+	int i, m, q;
 	while(scanf("%d %d", &m, &q) != EOF && (m || q)) {
-		co.clear(); cp.clear(); adj.clear(); seen.clear(); seen2.clear(); val.clear();
-		vector<int> vs;
+		cn = 0;
 		for(i = 0; i < m; i++) {
-			scanf("%d %d %d", &a, &b, &w);
-			if(a == b) w *= 2;
-			adj[a].pb(pii(b, w));
-			adj[b].pb(pii(a, w));
-			vs.pb(a); vs.pb(b);
+			scanf("%d %d %d", &a[i], &b[i], &w[i]);
+			c[cn++] = a[i];
+			c[cn++] = b[i];
+			if(a[i] == b[i]) w[i] *= 2;
 		}
-		sort(vs.begin(), vs.end());
-		vs.erase(unique(vs.begin(), vs.end()), vs.end());
-		int cn = 0;
-		for(int u : vs)
-			if(!seen.count(u)) {
-				is_bip[cn] = true;
-				any = false;
-				tmp.clear();
-				bip(cn, 0, u, u, 0, 1);
-				if(is_bip[cn]) bad = u, badval = 0;
-				go(bad, badval);
-				cn++;
-			}
-		while(q--) {
+		sort(c, c + cn);
+		cn = unique(c, c + cn) - c;
+		for(i = 0; i < cn; i++) adj[i].clear(), seen[i] = 0;
+		for(i = 0; i < m; i++) {
+			a[i] = lower_bound(c, c + cn, a[i]) - c;
+			b[i] = lower_bound(c, c + cn, b[i]) - c;
+			//printf("%d <-> %d\n", a[i], b[i]);
+			adj[a[i]].pb(pii(b[i], w[i]));
+			adj[b[i]].pb(pii(a[i], w[i]));
+		}
+		for(i = 0; i < cn; i++) {
+			if(seen[i]) continue;
+			sn = 0;
+			bip[i] = 1;
+			dfs(i, i, 0);
+			if(bip[i]) bad = i, badval = 0;
+			//puts("======");
+			go(bad, badval);
+		}
+		for(i = 0; i < q; i++) {
+			int a, b;
 			scanf("%d %d", &a, &b);
-			if(!co.count(a) || !co.count(b)) { puts("*"); continue; }
-			if(cp[a] != cp[b]) { puts("*"); continue; }
-			if(is_bip[cp[a]] && co[a] == co[b]) { puts("*"); continue; }
-			printf("%lld\n", a == b? val[a] : val[a] + val[b]);
+			if(!binary_search(c, c + cn, a) || !binary_search(c, c + cn, b)) { puts("*"); continue; }
+			a = lower_bound(c, c + cn, a) - c;
+			b = lower_bound(c, c + cn, b) - c;
+			if(cp[a] == cp[b] && bip[cp[a]] && co[a] != co[b]) { printf("%lld\n", val[a] + val[b]); continue; }
+			if(bip[cp[a]] || bip[cp[b]]) { puts("*"); continue; }
+			printf("%lld\n", (a == b? val[a] : val[a] + val[b]));
 		}
 		puts("-");
 	}
