@@ -1,8 +1,9 @@
 #include <bits/stdc++.h>
 using namespace std;
-typedef long long num;
-const int N = 5000 * 2;
-const int M = (30000 + 1) * 2;
+typedef long long ll;
+typedef ll num;
+const int N = 112345;
+const int M = 112345 * 2 + 2;
 
 struct dinic {
 	int hd[N], seen[N], qu[N], lv[N], ei[N], to[M], nx[M];
@@ -61,12 +62,49 @@ struct dinic {
 	}
 } d;
 
+int g[100][100];
+
+typedef pair<int, int> pii;
+#define i first
+#define j second
+#define pb push_back
+
+int n, m;
+inline int vin(int i, int j) { return 2 * (i * m + j); }
+inline int vout(int i, int j) { return 2 * (i * m + j) + 1; }
+
 int main() {
-	int n, m, a, b, c;
 	scanf("%d %d", &n, &m);
-	for(int i = 0; i < m; i++) {
-		scanf("%d %d %d", &a, &b, &c);
-		d.add_edge(a - 1, b - 1, c, c);
+	int a, b, a2, b2;
+	int k, l; scanf("%d %d", &k, &l);
+	while(k--) {
+		scanf("%d %d", &a, &b);
+		g[a - 1][b - 1] = 1;
 	}
-	printf("%lld\n", d.max_flow(0, n - 1));
+	while(l--) {
+		scanf("%d %d", &a, &b);
+		g[a - 1][b - 1] = 2;
+	}
+	for(int i = 0; i < n; i++)
+		for(int j = 0; j < m; j++) {
+			if(g[i][j] == 1) continue;
+			d.add_edge(vin(i, j), vout(i, j), g[i][j]? 1 : INT_MAX);
+			if(i < n - 1 && g[i + 1][j] != 1) {
+				d.add_edge(vout(i, j), vin(i + 1, j), INT_MAX);
+				d.add_edge(vout(i + 1, j), vin(i, j), INT_MAX);
+			}
+			if(j < m - 1 && g[i][j + 1] != 1) {
+				d.add_edge(vout(i, j), vin(i, j + 1), INT_MAX);
+				d.add_edge(vout(i, j + 1), vin(i, j), INT_MAX);
+			}
+		}
+	scanf("%d %d %d %d", &a, &b, &a2, &b2); a--; b--; a2--; b2--;
+	ll ans = d.max_flow(vout(a, b), vin(a2, b2));
+	if(ans < INT_MAX) {
+		printf("%d\n", int(ans));
+		for(int i = 0; i < n; i++)
+			for(int j = 0; j < m; j++)
+				if(g[i][j] == 2 && (d.seen[vin(i, j)] == d.tempo) != (d.seen[vout(i, j)] == d.tempo))
+					printf("%d %d\n", i + 1, j + 1);
+	} else printf("-1\n");
 }

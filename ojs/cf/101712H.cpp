@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef long long num;
-const int N = 5000 * 2;
-const int M = (30000 + 1) * 2;
+const int N = 502;
+const int M = (10000 + 1) * 2;
 
 struct dinic {
 	int hd[N], seen[N], qu[N], lv[N], ei[N], to[M], nx[M];
@@ -68,5 +68,15 @@ int main() {
 		scanf("%d %d %d", &a, &b, &c);
 		d.add_edge(a - 1, b - 1, c, c);
 	}
-	printf("%lld\n", d.max_flow(0, n - 1));
+	num ans = d.max_flow(0, n - 1);
+	vector<int> es;
+	for(int i = 0; i < n; i++)
+		if(d.seen[i] == d.tempo)
+			for(int e = d.hd[i]; e; e = d.nx[e])
+				if(d.seen[d.to[e]] != d.tempo)
+					es.push_back(e / 2);
+	printf("%d %lld\n", int(es.size()), ans);
+	for(int e : es)
+		printf("%d ", e);
+	putchar('\n');
 }

@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 typedef int num;
-const int N = 1123456;
-const int M = (312345) * 2 + 2;
+const int N = 112345;
+const int M = 112345 * 2 + 2;
 
 struct dinic {
 	int hd[N], seen[N], qu[N], lv[N], ei[N], to[M], nx[M];
@@ -61,22 +61,55 @@ struct dinic {
 	}
 } d;
 
-template<class num> inline void rd(num &x) {
-	scanf("%d", &x);
-}
+int g[100][100];
+
+typedef pair<int, int> pii;
+#define i first
+#define j second
+#define pb push_back
 
 int main() {
-	int n, m, x, p;
-	rd(n); rd(m); rd(p);
-	int s = n + m, t = n + m + 1;
-	for(int i = 0; i < n; i++)
-		d.add_edge(s, i, 1);
-	for(int i = 0; i < m; i++)
-		d.add_edge(i + n, t, 1);
+	int n, p;
+	scanf("%d %d", &n, &p);
+	int des = n * n - p;
 	while(p--) {
 		int a, b;
-		rd(a); rd(b);
-		d.add_edge(a - 1, b - 1 + n, INT_MAX);
+		scanf("%d %d", &a, &b);
+		g[a - 1][b - 1] = 1;
 	}
-	printf("%d\n", d.max_flow(s, t));
+	int s = n * n, t = n * n + 1;
+	for(int i = 0; i < n; i++)
+		for(int j = 0; j < n; j++) {
+			if(g[i][j]) continue;
+			if((i + j) & 1) {
+				d.add_edge(s, i * n + j, 1);
+				if(i > 0 && !g[i - 1][j]) d.add_edge(i * n + j, (i - 1) * n + j, INT_MAX);
+				if(i < n - 1 && !g[i + 1][j]) d.add_edge(i * n + j, (i + 1) * n + j, INT_MAX);
+				if(j < n - 1 && !g[i][j + 1]) d.add_edge(i * n + j, i * n + (j + 1), INT_MAX);
+				if(j > 0 && !g[i][j - 1]) d.add_edge(i * n + j, i * n + (j - 1), INT_MAX);
+			} else
+				d.add_edge(i * n + j, t, 1);
+		}
+	if(!(des & 1) && d.max_flow(s, t) == des / 2) {
+		puts("Yes");
+		vector<pii> vert, hor;
+		for(int i = 0; i < n; i++)
+			for(int j = 0; j < n; j++) {
+				if(g[i][j] || !((i + j) & 1)) continue;
+				for(int e = d.hd[i * n + j]; e; e = d.nx[e])
+					if(d.fl[e] && d.to[e] != s) {
+						int ni = d.to[e] / n;
+						int nj = d.to[e] % n;
+						if(ni > i) vert.pb(pii(i, j));
+						if(ni < i) vert.pb(pii(ni, nj));
+						if(nj < j) hor.pb(pii(ni, nj));
+						if(nj > j) hor.pb(pii(i, j));
+					}
+			}
+		for(auto &v : {vert, hor}) {
+			printf("%d\n", int(v.size()));
+			for(pii p : v)
+				printf("%d %d\n", p.i + 1, p.j + 1);
+		}
+	} else puts("No");
 }

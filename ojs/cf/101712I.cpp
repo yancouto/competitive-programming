@@ -1,8 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
-typedef long long num;
-const int N = 5000 * 2;
-const int M = (30000 + 1) * 2;
+typedef int num;
+const int N = 112345;
+const int M = 112345 * 2 + 2;
 
 struct dinic {
 	int hd[N], seen[N], qu[N], lv[N], ei[N], to[M], nx[M];
@@ -61,12 +61,38 @@ struct dinic {
 	}
 } d;
 
+char g[100][100];
+int want[256];
+
+typedef pair<int, int> pii;
+#define i first
+#define j second
+#define pb push_back
+
 int main() {
-	int n, m, a, b, c;
+	int n = 0, m;
+	for(char c : "HONC") want[c] = ++n;
 	scanf("%d %d", &n, &m);
-	for(int i = 0; i < m; i++) {
-		scanf("%d %d %d", &a, &b, &c);
-		d.add_edge(a - 1, b - 1, c, c);
-	}
-	printf("%lld\n", d.max_flow(0, n - 1));
+	int des = 0;
+	for(int i = 0; i < n; i++)
+		for(int j = 0; j < m; j++) {
+			scanf(" %c", &g[i][j]);
+			des += want[g[i][j]];
+		}
+	int s = n * m, t = n * m + 1;
+	for(int i = 0; i < n; i++)
+		for(int j = 0; j < m; j++) {
+			if(g[i][j] == '.') continue;
+			if((i + j) & 1) {
+				d.add_edge(s, i * m + j, want[g[i][j]]);
+				if(i > 0 && g[i - 1][j] != '.') d.add_edge(i * m + j, (i - 1) * m + j, 1);
+				if(i < n - 1 && g[i + 1][j] != '.') d.add_edge(i * m + j, (i + 1) * m + j, 1);
+				if(j < m - 1 && g[i][j + 1] != '.') d.add_edge(i * m + j, i * m + (j + 1), 1);
+				if(j > 0 && g[i][j - 1] != '.') d.add_edge(i * m + j, i * m + (j - 1), 1);
+			} else
+				d.add_edge(i * m + j, t, want[g[i][j]]);
+		}
+	if(des && !(des & 1) && d.max_flow(s, t) == des / 2) {
+		puts("Valid");
+	} else puts("Invalid");
 }

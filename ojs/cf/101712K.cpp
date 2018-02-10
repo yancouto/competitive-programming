@@ -1,8 +1,9 @@
 #include <bits/stdc++.h>
 using namespace std;
-typedef long long num;
-const int N = 5000 * 2;
-const int M = (30000 + 1) * 2;
+typedef long long ll;
+typedef ll num;
+const int N = 1123;
+const int M = 112345 * 2 + 2;
 
 struct dinic {
 	int hd[N], seen[N], qu[N], lv[N], ei[N], to[M], nx[M];
@@ -16,7 +17,7 @@ struct dinic {
 	void reset_flow() { memset(fl, 0, sizeof(num) * en); }
 
 	// edge from a to b with cap c and edge from b to a with cap rc
-	void add_edge(int a, int b, int c, int rc=0) {
+	void add_edge(int a, int b, num c, num rc=0) {
 		to[en] = b; nx[en] = hd[a]; fl[en] = 0; cp[en] =  c; hd[a] = en++;
 		to[en] = a; nx[en] = hd[b]; fl[en] = 0; cp[en] = rc; hd[b] = en++;
 	}
@@ -62,11 +63,25 @@ struct dinic {
 } d;
 
 int main() {
-	int n, m, a, b, c;
-	scanf("%d %d", &n, &m);
-	for(int i = 0; i < m; i++) {
-		scanf("%d %d %d", &a, &b, &c);
-		d.add_edge(a - 1, b - 1, c, c);
+	int n, i, x, k;
+	scanf("%d", &n);
+	int s = n, t = n + 1;
+	int totp = 0;
+	for(i = 0; i < n; i++) {
+		scanf("%d", &x);
+		if(x > 0) {
+			totp += x;
+			d.add_edge(i, t, x);
+		} else {
+			d.add_edge(s, i, -x);
+		}
 	}
-	printf("%lld\n", d.max_flow(0, n - 1));
+	for(i = 0; i < n; i++) {
+		scanf("%d", &k);
+		while(k--) {
+			scanf("%d", &x);
+			d.add_edge(x - 1, i, INT_MAX);
+		}
+	}
+	printf("%lld\n", totp - d.max_flow(s, t));
 }
