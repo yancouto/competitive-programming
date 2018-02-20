@@ -14,155 +14,199 @@ inline void rd(int &x) {
 		x = (x << 3) + (x << 1) + (c - '0');
 }
 
-const int M = 1123456 << 2;
-ll tr[M], lz[M]; ll sum;
-inline void unlaze(int i, int l, int r) {
-	tr[i] += lz[i];
-	if(l != r)
-		lz[2 * i] += lz[i],
-		lz[2 * i + 1] += lz[i];
-	lz[i] = 0;
-}
-void add(int i, int l, int r, int ql, int qr, ll x) {
-	unlaze(i, l, r);
-	if(i == 1) sum += ll(qr - ql + 1) * x;
-	//if(i == 1) printf("(%d, %d) += %lld\n", ql, qr, x);
-	if(l > qr || r < ql) return;
-	if(l >= ql && r <= qr) {
-		lz[i] = x;
-		unlaze(i, l, r);
-		return;
-	}
-	int m = (l + r) / 2;
-	add(2 * i, l, m, ql, qr, x);
-	add(2 * i + 1, m + 1, r, ql, qr, x);
-	tr[i] = max(tr[2 * i], tr[2 * i + 1]);
-}
-inline ll get_root(int i, int l, int r) {
-	unlaze(i, l, r);
-	return tr[i];
-}
-
-const int X = 1123456;
-
-const int bad = SHRT_MAX;
-
-struct seg_ {
-	short l, r, row;
-	inline bool bad() { return row == ::bad; }
-	inline bool empty() { return l > r; }
-} seg[41234567];
-
-int en = 0;
-int new_inter(short l, short r, short i, int val=-1) {
-	assert(en < 21234567);
-	seg[en] = seg_{l, r, i};
-	return en++;
-}
-
-struct rm_ord {
-	bool operator() (int i, int j) {
-		if(seg[i].row != seg[j].row)
-			return seg[i].row < seg[j].row;
-		return i < j;
-	}
-};
-
-struct ord {
-	bool operator() (int i, int j) {
-		if(seg[i].l != seg[j].l)
-			return seg[i].l < seg[j].l;
-		return i < j;
-	}
-};
-
-int n, m, k;
-set<int, rm_ord> rm;
-
-void add_inter(set<int, ord> &s, int sid) {
-	seg_ &S = seg[sid];
-	if(S.empty()) return;
-	auto nx = s.upper_bound(sid);
-	while(nx != s.end() && seg[*nx].l <= S.l)
-		++nx;
-	--nx;
-	int pr = seg[*nx].r;
-	seg[*nx].r = S.l - 1;
-	if(seg[*nx].bad())
-		add(1, 0, m - k, S.l, min<int>(S.r, pr), 1);
-	auto it = s.insert(sid).first;
-	rm.insert(sid);
-	if(pr > S.r) {
-		int ns = new_inter(S.r + 1, pr, seg[*nx].row);
-		s.insert(ns);
-		if(!seg[ns].bad()) rm.insert(ns);
-		return;
-	}
-	if(seg[*nx].empty()) {
-		int j = *nx;
-		s.erase(j);
-		rm.erase(j);
-	}
-	while(true) {
-		nx = next(it);
-		if(nx == s.end() || seg[*nx].l > S.r) break;
-		seg_ &T = seg[*nx];
-		if(T.r <= S.r) {
-			if(T.bad())
-				add(1, 0, m - k, T.l, T.r, 1);
-			else
-				rm.erase(*nx);
-			s.erase(nx);
-		} else { // break
-			int j = *nx;
-			s.erase(j);
-			if(T.bad())
-				add(1, 0, m - k, T.l, S.r, 1);
-			T.l = S.r + 1;
-			s.insert(j);
-			break;
-		}
-	}
-}
-
-set<int, ord> s[X];
-
 int A[3123][3123];
 
-void deb(int i, int l, int r) {
-	if(l == r) return (void) printf("%lld ", tr[i]);
-	int m = (l + r) / 2;
-	deb(2 * i, l, m);
-	deb(2 * i + 1, m + 1, r);
-	if(i == 1) putchar('\n');
+ll best, sum;
+int n, m, k;
+
+const int X = 112345;
+deque<int> qmn[X], qmx[X];
+
+int acc[3123][3123];
+
+vector<pii> inters(int up, int down) {
+	if(up == -1 && down == n) return vector<pii>();
+	if(up != -1 && down != n && down - k + 1 <= up)
+		return vector<pii>{pii(0, k - 1)};
+	vector<pii> ans;
+	//printf("inters %d, %d\n", up, down);
+	if(up != -1) ans.pb(pii(0, up));
+	if(down != n && down - k + 1 < k) ans.pb(pii(down - k + 1, k - 1));
+	return ans;
 }
 
+void clr(int j, int x, int y=1) {
+	//printf("\nfixing %d\n", x);
+	for(pii p : inters((qmx[x].empty()? -1 : qmx[x].front()), (qmn[x].empty()? n : qmn[x].front()))) {
+		//printf("(%lld, %lld) += %d\n", p.first, p.second, -y);
+		acc[p.first][j] += -y;
+		acc[p.second + 1][j] += y;
+	}
+}
+
+void add(int j, int x) {
+	clr(j, x, -1);
+}
+
+void go(int oi) {
+	//printf("\n============\n");
+	//printf("go(%d)\n", oi);
+	for(int j = 0; j < m; j++) {
+		//printf("at col %d\n", j);
+		for(int i = oi; i < oi + k && i < n; i++) {
+			int x = A[i][j];
+			clr(max(j - k + 1, 0), x);
+			while(!qmx[x].empty() && qmx[x].back() < i - oi)
+				qmx[x].pop_back();
+			qmx[x].pb(i - oi);
+			add(max(j - k + 1, 0), x);
+		}
+		//printf("line---\n");
+		for(int i = oi + k; i < oi + 2 * k && i < n; i++) {
+			int x = A[i][j];
+			clr(max(j - k + 1, 0), x);
+			while(!qmn[x].empty() && qmn[x].back() > i - oi)
+				qmn[x].pop_back();
+			qmn[x].pb(i - oi);
+			add(max(j - k + 1, 0), x);
+		}
+		if(j >= k) {
+			//printf("removing row %d\n", j - k);
+			for(int i = oi; i < oi + k && i < n; i++) {
+				int x = A[i][j - k];
+				clr(max(j - k + 1, 0), x);
+				if(!qmx[x].empty() && qmx[x].front() == i - oi)
+					qmx[x].pop_front();
+				add(max(j - k + 1, 0), x);
+			}
+			for(int i = oi + k; i < oi + 2 * k && i < n; i++) {
+				int x = A[i][j - k];
+				clr(max(j - k + 1, 0), x);
+				if(!qmn[x].empty() && qmn[x].front() == i - oi)
+					qmn[x].pop_front();
+				add(max(j - k + 1, 0), x);
+			}
+		}
+	}
+	int i, j;
+	for(i = 0; i < k; i++)
+		for(j = 1; j < m; j++)
+			acc[i][j] += acc[i][j - 1];
+	for(j = 0; j < m; j++)
+		for(i = 1; i < k; i++)
+			acc[i][j] += acc[i - 1][j];
+	for(i = 0; i < k && i + oi <= n - k; i++)
+		for(j = 0; j <= m - k; j++) {
+			//printf("ans[%d][%d] = %d\n", i + oi, j, acc[i][j]);
+			sum += acc[i][j];
+			best = max<ll>(best, acc[i][j]);
+		}
+	for(i = 0; i < k; i++)
+		for(j = 0; j < m; j++)
+			acc[i][j] = 0;
+	for(i = oi; i < oi + 2 * k && i < n; i++)
+		for(j = 0; j < m; j++)
+			qmn[A[i][j]].clear(),
+			qmx[A[i][j]].clear();
+	//puts("======\n");
+}
+
+pii brut();
+
+
 int main() {
+	srand(time(NULL));
+	//while(true) {
+	best = sum = 0;
 	rd(n); rd(m); rd(k);
+	//n = (rand() % 3) + 2;
+	//m = (rand() % 3) + 2;
+	//k = min({(rand() % 3) + 1, n, m});
 	int i, j;
 	for(i = 0; i < n; i++)
 		for(j = 0; j < m; j++)
 			rd(A[i][j]);
-	for(i = 0; i < X; i++)
-		s[i].insert(new_inter(0, m - k, bad));
-	ll best = 0, sum = 0;
-	for(i = 0; i < n; i++) {
-		while(!rm.empty() && seg[*rm.begin()].row <= i - k) {
-			int j = *rm.begin();
-			rm.erase(j);
-			seg[j].row = bad;
-			//printf("deleting from %d\n", seg[j].val);
-			add(1, 0, m - k, seg[j].l, seg[j].r, -1);
-		}
-		for(j = 0; j < m; j++) {
-			//printf(">> Add %d\n", A[i][j]);
-			add_inter(s[A[i][j]], new_inter(max(0, j - k + 1), min(m - k, j), i, A[i][j]));
-		}
-		//deb(1, 0, m - k );
-		if(i >= k - 1) {
-			best = max(best, get_root(1, 0, m - k));
-			sum += ::sum;
+			//A[i][j] = rand() % 3;
+	for(i = 0; i <= n - k; i += k)
+		go(i);
+	printf("%lld %lld\n", best, sum);
+
+	//pii br = brut();
+	//if(pii(best, sum) != br) {
+	//	printf("vs %lld %lld\n", br.first, br.second);
+	//	printf("%d %d %d\n", n, m, k);
+	//	for(i = 0; i < n; i++)
+	//		for(j = 0; j < m; j++)
+	//			printf("%d%c", A[i][j], j == m - 1? '\n' : ' ');
+	//	return 0;
+	//}
+	//}
+}
+
+int freq[112345];
+ll cur;
+inline void add(int x) {
+	if(freq[x]++ == 0)
+		cur++;
+	//printf("add %d cur %d\n", x, cur);
+}
+
+inline void rem(int x) {
+	if(--freq[x] == 0)
+		cur--;
+	//printf("rem %d cur %d\n", x, cur);
+}
+
+pii brut() {
+	memset(freq, 0, sizeof freq);
+	cur = 0;
+	int i, j, g;
+	for(i = 0; i < k; i++)
+		for(j = 0; j < k; j++)
+			add(A[i][j]);
+	ll tot = cur;
+	ll best = cur;
+	//printf("at(0, 0) + %d = cur %d\n", k, cur);
+	for(i = 0; i + k - 1 < n; i++) {
+		if(i & 1) {
+			for(j = m - 1 - k; j >= 0; j--) {
+				for(g = 0; g < k; g++) {
+					rem(A[i + g][j + k]);
+					add(A[i + g][j]);
+				}
+				//printf("at(%d, %d) + %d = cur %d\n", i, j, k, cur);
+				best = max(best, cur);
+				tot += cur;
+			}
+			if(i + k < n) {
+				for(g = 0; g < k; g++) {
+					rem(A[i][g]);
+					add(A[i + k][g]);
+				}
+				best = max(best, cur);
+				tot += cur;
+				//printf("at(%d, 0) + %d = cur %d\n", i + 1, k, cur);
+			}
+		} else {
+			for(j = 0; j + k < m; j++) {
+				for(g = 0; g < k; g++) {
+					rem(A[i + g][j]);
+					add(A[i + g][j + k]);
+				}
+				//printf("at(%d, %d) + %d = cur %d\n", i, j + 1, k, cur);
+				best = max(best, cur);
+				tot += cur;
+			}
+			if(i + k < n) {
+				for(g = 0; g < k; g++) {
+					rem(A[i][m - 1 - g]);
+					add(A[i + k][m - 1 - g]);
+				}
+				best = max(best, cur);
+				tot += cur;
+				//printf("at(%d, %d) + %d = cur %d\n", i + 1, m - k, k, cur);
+			}
 		}
 	}
-	printf("%lld %lld\n", best, sum);
+	return pii(best, tot);
 }
