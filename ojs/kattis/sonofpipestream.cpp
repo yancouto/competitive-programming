@@ -1,16 +1,11 @@
 #include <bits/stdc++.h>
 using namespace std;
-#define fst first
-#define snd second
 typedef long long ll;
-typedef pair<int, int> pii;
-#define pb push_back
-#define for_tests(t, tt) int t; scanf("%d", &t); for(int tt = 1; tt <= t; tt++)
 
 typedef long double num;
-const int N = 212;
+const int N = 1123;
 const int M = 112345 * 2;
-const num eps = 1e-8;
+const num eps = 1e-9;
 
 struct dinic {
 	int hd[N], seen[N], qu[N], lv[N], ei[N], to[M], nx[M];
@@ -70,59 +65,55 @@ struct dinic {
 };
 
 dinic d;
-int e_;
-num a, v;
 
-num bk, bk2;
-num get_val(num m) {
+num v, a;
+int e_;
+
+num W_;
+num val;
+num get_val(num Fv) {
+	d.cp[e_] = Fv;
 	d.reset_flow();
-	d.cp[e_] = m;
-	assert(d.max_flow(0, 3) >= m - 1e-6);
-	bk2 = d.max_flow(1, 3);
-	bk = (pow(m, 1. - a) * pow(bk2 / v, a));
-	//printf("get_val(%.3f) ot %.3f = %.3f\n", m, ot / v, bk);
-	return bk;
+	d.max_flow(0, 3);
+	W_ = d.max_flow(2, 3);
+	return (val = powl(Fv / v, a) * powl(W_, 1. - a));
 }
 
-num f[M], w[M];
+num F[M], W[M];
+int seen[N], tempo;
 
-int mrk[N];
-
-num dfs(int u, bool fu, num f) {
+num go(int u, int sz, bool fu, num f) {
 	if(u == 3) return f;
-	if(u == 1) fu = true;
+	if(sz == 1) fu = (u == 1);
+	seen[u] = tempo;
 	for(int e = d.hd[u]; e; e = d.nx[e])
-		if(d.cp[e] > d.fl[e] + eps) {
-			num rf = dfs(d.to[e], fu, min(f, d.cp[e] - d.fl[e]));
-			assert(rf);
-			d.fl[e] += rf;
-			if(fu) {
-				::f[e] += rf / v;
-				::f[e ^ 1] -= rf / v;
-			} else {
-				w[e] += rf;
-				w[e ^ 1] -= rf;
+		if(seen[d.to[e]] != tempo && d.cp[e] - d.fl[e] > eps)
+			if(num rf = go(d.to[e], sz + 1, fu, min(f, d.cp[e] - d.fl[e]))) {
+				d.fl[e] += rf;
+				if(fu) {
+					F[e] += rf / v;
+					F[e ^ 1] -= rf / v;
+				} else {
+					W[e] += rf;
+					W[e ^ 1] -= rf;
+				}
+				return rf;
 			}
-			mrk[u] = 0;
-			return rf;
-		}
 	return 0;
 }
 
 int main() {
-	int i, n, m;
-	cin >> n >> m;
-	cin >> v >> a;
+	int n, m, i;
+	cin >> n >> m >> v >> a;
 	for(i = 0; i < m; i++) {
-		int a, b, c;
+		int a, b; num c;
 		cin >> a >> b >> c;
 		d.add_edge(a, b, c, c);
 	}
-	d.add_edge(0, 2, 30000);
+	d.add_edge(0, 1, 100000);
 	e_ = d.en - 2;
 	num l = 0, r = d.max_flow(0, 3);
-	//printf("mx %.3f\n", r);
-	for(int bb = 0; bb < 70; bb++) {
+	for(int bb = 0; bb < 80; bb++) {
 		num m1 = (2. * l + r) / 3.;
 		num m2 = (l + 2. * r) / 3.;
 		if(get_val(m1) < get_val(m2))
@@ -130,15 +121,13 @@ int main() {
 		else
 			r = m2;
 	}
-	//for(i = 2; i < d.en; i += 2)
-	//	printf("%.3f / %.3f\n", d.fl[i], d.cp[i]);
-	for(i = 2; i < d.en; i++) {
+	cout << setprecision(15);
+	for(i = 2; i < d.en; i++)
 		d.cp[i] = d.fl[i];
-		d.fl[i] = 0;
-	}
-	d.add_edge(0, 1, bk2);
-	while(dfs(0, 0, 1./0.));
-	for(i = 2; i < d.en - 4; i += 2)
-		printf("%.15f %.15f\n", double(f[i]), double(w[i]));
-	printf("%.15f\n", double(bk));
+	d.reset_flow();
+	d.add_edge(0, 2, W_, -1);
+	for(tempo++; go(0, 0, false, 1./0.); tempo++);
+	for(int i = 2; i < d.en - 4; i += 2)
+		cout << F[i] << ' ' << W[i] << endl;
+	cout << val << endl;
 }
