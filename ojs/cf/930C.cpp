@@ -67,17 +67,18 @@ int main() {
 	for(i = 1; i < n; i++)
 		a[i] += a[i - 1];
 	dpl[0] = 1;
-	set(1, 0, n, a[0], dpl[0]);
+	const int m = 100000;
+	set(1, 0, m, a[0], dpl[0]);
 	for(i = 1; i < n; i++) {
-		dpl[i] = 1 + get(1, 0, n, a[i]);
-		set(1, 0, n, a[i], dpl[i]);
+		dpl[i] = 1 + get(1, 0, m, a[i]);
+		set(1, 0, m, a[i], dpl[i]);
 	}
-	build(1, 0, n);
+	build(1, 0, m);
 	dpr[n - 1] = 1;
-	set(1, 0, n, a[n - 1], dpr[n - 1]);
+	set(1, 0, m, a[n - 1], dpr[n - 1]);
 	for(i = n - 2; i >= 0; i--) {
-		dpr[i] = 1 + get(1, 0, n, a[i]);
-		set(1, 0, n, a[i], dpr[i]);
+		dpr[i] = 1 + get(1, 0, m, a[i]);
+		set(1, 0, m, a[i], dpr[i]);
 	}
 	int mx = 0;
 	for(i = 0; i < n; i++)
