@@ -28,12 +28,12 @@ int n, m;
 //}
 
 inline bool valid(int e, int rc, int bk, int iv) {
-	if(bk >= n || rc < bk || e < rc + iv || e > (bk + 1) * (rc) + ((rc - bk) * (rc - bk - 1)) / 2) return false;
+	if(bk >= n || rc < bk || bk < iv || e < rc + iv || e > (bk + 1) * (rc) + ((rc - bk) * (rc - bk - 1)) / 2) return false;
 	return true;
 }
 
-int memo[2][51][51][51];
-int acc [2][51][51][51];
+int memo[2][51][51];
+int acc [2][51][51];
 //int ways(int e, int rc, int bk, int iv) {
 //	//printf("%d, %d, %d, %d\n", e, rc, bk, iv);
 //	if(!valid(e, rc, bk, iv)) return 0;
@@ -53,32 +53,34 @@ int acc [2][51][51][51];
 int main() {
 	for_tests(tn, tt) {
 		scanf("%d %d %d", &n, &m, &modn);
-		for(int rc = 0; rc < n; rc++)
-			for(int bk = 0; bk < n; bk++)
-				for(int iv = 0; iv < n; iv++)
-					memo[0][rc][bk][iv] = 0;
-		memo[0][0][0][0] = 1;
+		for(int bk = 0; bk < n; bk++)
+			for(int iv = 0; iv < n; iv++)
+				memo[0][bk][iv] = 0;
+		memo[0][0][0] = 1;
 		for(int e = 1; e <= m; e++) {
 			int ei = (e & 1);
 			for(int bk = 0; bk < n; bk++)
-				for(int rc = bk; rc < n; rc++)
-					for(int iv = 0; iv <= bk; iv++) {
-						int &r = memo[ei][rc][bk][iv];
-						r = 0;
-						if(!valid(e, rc, bk, iv)) continue;
-						if(valid(e - 1, rc, bk, iv)) r = memo[!ei][rc][bk][iv];
-						else if(rc > 0) r = memo[!ei][rc - 1][bk][iv];
-						if(iv && bk)
-							r = mod(r + acc[!ei][rc][bk - 1][iv - 1]);
-							//for(int i = bk - 1; i >= 0; i--)
-							//	r = mod(r + memo[!ei][rc][i][iv - 1]);
-						acc[ei][rc][bk][iv] = mod(r + (bk? acc[ei][rc][bk - 1][iv] : 0));
+				for(int iv = 0; iv < n; iv++) {
+					int rc = min(n - 1, e - iv);
+					int &r = memo[ei][bk][iv];
+					r = 0;
+					if(!valid(e, rc, bk, iv)) {
+						acc[ei][bk][iv] = mod(r + (bk? acc[ei][bk - 1][iv] : 0));
+						continue;
 					}
+					r = memo[!ei][bk][iv];
+					if(iv && bk)
+						r = mod(r + acc[!ei][bk - 1][iv - 1]);
+						//for(int i = bk - 1; i >= 0; i--)
+						//	r = mod(r + memo[!ei][rc][i][iv - 1]);
+					//printf("memo[e %d][rc %d][bk %d][iv %d] = %d\n", e, rc, bk, iv, r);
+					acc[ei][bk][iv] = mod(r + (bk? acc[ei][bk - 1][iv] : 0));
+				}
 
 			int ans = 0;
 			for(int iv = 0; iv < n && iv <= e; iv++)
 				for(int j = iv; j < n && j <= e - iv; j++)
-					ans = mod(ans + memo[ei][min(n - 1, e - iv)][j][iv]);
+					ans = mod(ans + memo[ei][j][iv]);
 			printf("%d ", ans);
 		}
 		putchar('\n');
