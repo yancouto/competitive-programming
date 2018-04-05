@@ -14,31 +14,20 @@ inline ll mod(ll x) { return x % modn; }
 #endif
 
 const int N = 312 * 312 + 11234, M = (321 * 321 + 1123456) * 2;
-typedef int val; // type of flow
-typedef int num; // type of cost
-int es[N], to[M], nx[M], en, pai[N];
-val fl[M], cp[M];
-num cs[M], d[N];
-const num eps = 0;
-int seen[N], tempo;
-int qu[N];
-
-num tot;
+typedef int val;
+typedef int num;
+int es[N], to[M], nx[M], en = 2, pai[N], seen[N], tempo, qu[N];
+val fl[M], cp[M], flow; num cs[M], d[N], tot; int eps = 0;
 val spfa(int s, int t) {
-	tempo++;
-	int a = 0, b = 0;
+	tempo++; int a = 0, b = 0;
 	for(int i = 0; i < N; i++) d[i] = numeric_limits<num>::max();
-	d[s] = 0;
-	qu[b++] = s;
-	seen[s] = tempo;
+	d[s] = 0; qu[b++] = s; seen[s] = tempo;
 	while(a != b) {
-		int u = qu[a++]; if(a == N) a = 0;
-		seen[u] = 0;
-		for(int e = es[u]; e != -1; e = nx[e])
-			if(cp[e] - fl[e] > val(0) && d[u] + cs[e] < d[to[e]] - eps) {
-				d[to[e]] = d[u] + cs[e]; pai[to[e]] = e ^ 1;
-				if(seen[to[e]] < tempo) { seen[to[e]] = tempo; qu[b++] = to[e]; if(b == N) b = 0; }
-			}
+		int u = qu[a++]; if(a == N) a = 0; seen[u] = 0;
+		for(int e = es[u]; e; e = nx[e]) if(cp[e] - fl[e] > val(0) && d[u] + cs[e] < d[to[e]] - eps) {
+			d[to[e]] = d[u] + cs[e]; pai[to[e]] = e ^ 1;
+			if(seen[to[e]] < tempo) { seen[to[e]] = tempo; qu[b++] = to[e]; if(b == N) b = 0; }
+		}
 	}
 	if(d[t] == numeric_limits<num>::max()) return false;
 	val mx = numeric_limits<val>::max();
@@ -49,24 +38,18 @@ val spfa(int s, int t) {
 		fl[pai[u]] -= mx, fl[pai[u] ^ 1] += mx;
 	return mx;
 }
-
-// should be called before calling mncost
-void init(int n) {
-	en = 0;
-	memset(es, -1, sizeof(int) * n);
-}
-
-val flow;
-num mncost(int s, int t) {
+// public $
+num min_cost(int s, int t) {
 	tot = 0; flow = 0;
 	while(val a = spfa(s, t)) flow += a;
 	return tot;
 }
-
 void add_edge(int u, int v, val c, num s) {
 	fl[en] = 0; cp[en] = c; to[en] = v; nx[en] = es[u]; cs[en] =  s; es[u] = en++;
 	fl[en] = 0; cp[en] = 0; to[en] = u; nx[en] = es[v]; cs[en] = -s; es[v] = en++;
 }
+void reset_flow() { memset(fl, 0, sizeof(val) * en); }
+void init(int n) { en = 2; memset(es, 0, sizeof(int) * n); } // XXX must be called
 
 int X = -1000000;
 int a[N], b[N];
@@ -103,14 +86,14 @@ int main() {
 			add_edge(change + i, t, m, 0); // dont change vars
 		}
 	}
-	int val = mncost(s, t);
+	int val = min_cost(s, t);
 	vector<char> to_change;
 	for(i = 0; i < m; i++) to_change.pb('a' + i);
 	int ct = 0;
 	//asdasdasd
 	for(i = 0; i < n; i++) {
 		//printf("\n\n=== iteration %d ===\n", i);
-		for(int e = es[change + i]; e != -1; e = nx[e]) {
+		for(int e = es[change + i]; e; e = nx[e]) {
 			if(fl[e] <= 0) continue;
 			if(to[e] == t) {
 				//printf("no more change %d vars\n", fl[e]);
@@ -127,7 +110,7 @@ int main() {
 		}
 		ct++;
 		if(i < n - 1) {
-			for(int e = es[dispense + i]; e != -1; e = nx[e]) {
+			for(int e = es[dispense + i]; e; e = nx[e]) {
 				if(fl[e] <= 0) continue;
 				if(to[e] == change + i + 1) {
 					to_change.pb(vars[a[i]].back());
@@ -143,7 +126,7 @@ int main() {
 	printf("%d %d\n", ct, val - X * n);
 	for(i = 0; i < n; i++) {
 		//printf("\n\n=== iteration %d ===\n", i);
-		for(int e = es[change + i]; e != -1; e = nx[e]) {
+		for(int e = es[change + i]; e; e = nx[e]) {
 			if(fl[e] <= 0) continue;
 			if(to[e] == t) {
 				//printf("no more change %d vars\n", fl[e]);
@@ -160,7 +143,7 @@ int main() {
 		}
 		printf("print(%c)\n", vars[a[i]].back());
 		if(i < n - 1) {
-			for(int e = es[dispense + i]; e != -1; e = nx[e]) {
+			for(int e = es[dispense + i]; e; e = nx[e]) {
 				if(fl[e] <= 0) continue;
 				if(to[e] == change + i + 1) {
 					to_change.pb(vars[a[i]].back());
