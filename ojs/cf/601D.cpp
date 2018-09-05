@@ -1,78 +1,93 @@
-// WA ideia errada mas talvez de pra adaptar
 #include <bits/stdc++.h>
 using namespace std;
 #define fst first
 #define snd second
-typedef unsigned long long ull;
 typedef long long ll;
 typedef pair<int, int> pii;
 #define pb push_back
-#define for_tests(t, tt) int t; scanf("%d", &t); for(int tt = 1; tt <= t; tt++)
-template<typename T> inline T abs(T t) { return t < 0? -t : t; }
 const ll modn = 1000000007;
 inline ll mod(ll x) { return x % modn; }
-const int N = 300009;
-int S[N], sz[N];
-int find(int i) {
-	if(S[S[i]] != S[i]) S[i] = find(S[i]);
-	return S[i];
+#ifdef ONLINE_JUDGE
+#	define debug(args...) ((void) 0)
+#else
+#	define debug(args...) fprintf(stderr, args)
+#endif
+
+template<class num> inline void rd(num &x) {
+	char c;
+	while(isspace(c = getchar()));
+	bool neg = false;
+	if(!isdigit(c)) neg = (c == '-'), x = 0;
+	else x = c - '0';
+	while(isdigit(c = getchar()))
+		x = (x << 3) + (x << 1) + c - '0';
+	if(neg) x = -x;
 }
+
+const int N = 312345;
 vector<int> adj[N];
-void join(int a, int b) {
-	if((a = find(a)) == (b = find(b))) return;
-	if(adj[a].size() < adj[b].size()) swap(a, b);
-	adj[a].insert(adj[a].end(), adj[b].begin(), adj[b].end());
-	S[b] = a;
-}
+int c[N], sz[N];
 char s[N];
-int df[N];
-int c[N];
-bool cmp(int u, int v) { return s[u] < s[v]; }
 
-int dfs0(int u, int p) {
-	if(p != -1) {
-		int i;
-		for(i = 0; adj[u][i] != p; i++);
-		adj[u].erase(adj[u].begin() + i);
+int n;
+
+void merge(int u, int v) {
+	assert(s[u] == s[v]);
+	vector<int> adj2;
+	unsigned l = 0, r = 0;
+	while(l < adj[u].size() || r < adj[v].size()) {
+		if(l < adj[u].size() && r < adj[v].size()) {
+			if(s[adj[u][l]] == s[adj[v][r]]) {
+				merge(adj[u][l], adj[v][r]);
+				adj2.pb(adj[u][l]);
+				l++; r++;
+			} else if(s[adj[u][l]] < s[adj[v][r]]) {
+				adj2.pb(adj[u][l++]);
+			} else {
+				adj2.pb(adj[v][r++]);
+			}
+		} else if(l < adj[u].size()) adj2.pb(adj[u][l++]);
+		else adj2.pb(adj[v][r++]);
 	}
-	for(int v : adj[u])
-		dfs0(v, u);
+	adj[u] = adj2;
+	sz[u] = 1;
+	for(int v : adj[u]) sz[u] += sz[v];
 }
+int best = 0;
+int bsz = 0;
 
-int dfs(int u) {
-	sort(adj[u].begin(), adj[u].end(), cmp);
-	int &d = df[u]; d = 1;
-	for(int i = 0; i < adj[u].size();) {
-		int j = i + 1;
-		while(j < adj[u].size() && s[adj[u][i]] == s[adj[u][j]])
-			join(adj[u][i], adj[u][j++]);
-		d += dfs(find(adj[u][i]));
-		i = j;
+void dfs(int u, int p) {
+	if(u) adj[u].erase(search_n(adj[u].begin(), adj[u].end(), 1, p));
+	for(int v : adj[u]) dfs(v, u);
+	sort(adj[u].begin(), adj[u].end(), [](int i, int j) { return s[i] < s[j]; });
+	vector<int> adj2;
+	for(int i = 0; i < int(adj[u].size()); i++)
+		if(i && s[adj[u][i]] == s[adj2.back()])
+			merge(adj2.back(), adj[u][i]);
+		else
+			adj2.pb(adj[u][i]);
+	adj[u] = adj2;
+	sz[u] = 1;
+	for(int v : adj[u]) sz[u] += sz[v];
+	if(sz[u] + c[u] > best) {
+		best = sz[u] + c[u];
+		bsz = 0;
 	}
-	return d;
+	if(sz[u] + c[u] == best)
+		bsz++;
 }
-
 
 int main() {
-	int i, a, b, n;
-	scanf("%d", &n);
-	for(i = 0; i < n; i++)
-		scanf("%d", &c[i]), S[i] = i, sz[i] = 1;
+	int i, j;
+	rd(n);
+	for(i = 0; i < n; i++) rd(c[i]);
 	scanf("%s", s);
 	for(i = 0; i < n - 1; i++) {
+		int a, b;
 		scanf("%d %d", &a, &b); a--; b--;
 		adj[a].pb(b);
 		adj[b].pb(a);
 	}
-	dfs0(0, -1);
-	dfs(0);
-	int mx = -1;
-	for(i = 0; i < n; i++)
-		mx = max(mx, c[i] + df[find(i)]);
-	printf("%d\n", mx);
-	int ct = 0;
-	for(i = 0; i < n; i++)
-		if(mx == c[i] + df[find(i)])
-			ct++;
-	printf("%d\n", ct);
+	dfs(0, 0);
+	printf("%d\n%d\n", best, bsz);
 }
