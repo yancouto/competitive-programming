@@ -2,46 +2,39 @@
 using namespace std;
 #define fst first
 #define snd second
-typedef pair<int, int> pii;
-typedef unsigned long long ull;
 typedef long long ll;
-typedef long double ld;
+typedef pair<int, int> pii;
 #define pb push_back
-#define for_tests(t, tt) int t; scanf("%d", &t); for(int tt = 1; tt <= t; tt++)
-inline int count_1s(int x) { return __builtin_popcount(x); }
-inline int count_1s(ull x) { return __builtin_popcountll(x); }
-template<typename T> inline T abs(T t) { return t < 0? -t : t; }
-#ifndef ONLINE_JUDGE
-#	define debug(args...) fprintf(stderr, "%3d| ", __LINE__); fprintf(stderr, args); fprintf(stderr, "\n");
+const ll modn = 1000000007;
+inline ll mod(ll x) { return x % modn; }
+#ifdef ONLINE_JUDGE
+#	define debug(args...) ((void) 0)
 #else
-#	define debug(args...)
+#	define debug(args...) fprintf(stderr, args)
 #endif
-const ull modn = 1000000007;
-inline ull mod(ull x) { return x % modn; }
-int n;
-char s1[1003], s2[1003];
-int memo[1003][1003], tempo;
 
-inline bool eq(char a, char b) { return abs(a - b) <= 1; }
+const int N = 1123;
 
+char a[N], b[N];
 
 int main() {
-	int i, j, k;
-	for_tests(t, tt) {
-		scanf("%d %s %s", &n, s1, s2);
-		tempo++;
-		int mx = 0;
-		for(i = 0; i < n; i++) {
-			for(j = 0; j < n; j++) {
-				if(memo[i][j] == tempo) continue;
-				for(k = 0; i + k < n && j + k < n && eq(s1[i+k], s2[j+k]); k++) {
-					mx = max(mx, k + 1);
-					memo[i+k][j+k] = tempo;
+	int t, n;
+	scanf("%d", &t);
+	while(t--) {
+		scanf("%d %s %s", &n, a, b);
+		int best = 0;
+		for(int d = - (n - 1); d <= (n - 1); d++) {
+			int cur = 0;
+			for(int i = 0; i < n; i++) {
+				if(i + d < 0 || i + d >= n || abs(a[i + d] - b[i]) > 1)
+					cur = 0;
+				else {
+					cur++;
+					best = max(best, cur);
 				}
 			}
 		}
-		if(mx >= (n + 1) / 2) puts("POSITIVE");
+		if(best * 2 >= n) puts("POSITIVE");
 		else puts("NEGATIVE");
 	}
-	return 0;
 }
