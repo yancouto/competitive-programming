@@ -3,7 +3,6 @@ fn get_line() -> String {
     while line.is_empty() {
         std::io::stdin().read_line(&mut line).unwrap();
     }
-    line.pop().unwrap();
     line
 }
 
@@ -28,4 +27,31 @@ where
         .map(|s| s.parse::<T>())
         .collect::<Result<Vec<T>, _>>()
         .unwrap()
+}
+
+fn solve() {
+    read_line!(n: usize);
+    let d = read_line_vec();
+    let mut a = vec![0; n];
+    a[0] = d[0];
+    for i in 1..n {
+        if d[i] == 0 {
+            a[i] = a[i - 1];
+        } else if d[i] > a[i - 1] {
+            a[i] = a[i - 1] + d[i];
+        } else {
+            println!("-1");
+            return;
+        }
+    }
+    for i in 0..n {
+        print!("{}{}", a[i], if i == n - 1 { '\n' } else { ' ' });
+    }
+}
+
+fn main() {
+    read_line!(t: u64);
+    for _ in 0..t {
+        solve();
+    }
 }
