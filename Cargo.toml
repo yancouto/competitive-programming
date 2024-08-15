@@ -1,0 +1,11 @@
+[package]
+name = "standalone"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[lib]
+path = "fake_main.rs"
+
+[build-dependencies]
+glob = "*"

@@ -25,3 +25,8 @@
 *.exe
 *.out
 *.class
+target/
+
+# Generated
+fake_main.rs
+Cargo.lock
